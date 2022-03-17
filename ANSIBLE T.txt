@@ -1,0 +1,332 @@
+TERAFORM
+
+Teraform is more of infrastructure provisioning and management while ansible is more of configuration management.
+Teraform is more of declarative.
+
+
+
+ANSIBLE
+
+Key value pair in yaml can look like
+fruit: orange
+name: Mufutau
+year: 1997
+there must be a space after the : differentiating the key and the value
+
+Array/List in yaml example
+Fruits:
+-   Orange
+-   Apple
+-   Banana
+Vegetables:
+-   Carrot
+-   Cauliflower
+-   Tomato
+
+Dictionary/Map example
+Banana:
+   Calories: 105
+   Fat:   0.4g
+   Carbs:   27g
+
+Grapes:
+   Calories: 62
+   Fat: 0.3g
+   Carbs: 16g
+
+SAMPLE LIST OF DICTIONARY
+-  Color: Blue
+   Model:
+	Name: Nissan
+	Model: 1985
+   Transition: Manual
+   Price: $5,000
+-  Color: Grey
+   Model:
+	Name: Nissan
+	Model: 1982
+   Transition: Manual
+   Price: $15,000
+
+Dictionary - Unordered while List is Ordered
+example for dictionary
+Banana:
+   Calories: 105
+   Fat: 0.4g
+and 
+Banana:
+   Fat: 0.4g
+   Calories: 105
+are both the same for dictionary while
+Fruits:
+-   Orange
+-   Apple
+and
+Fruits:
+-   Apple
+-   Orange
+are not the same for Array/List
+#this is a comment
+For Array/List
+Employee
+   -
+	age: this
+	year: this
+
+You can setup your ansible configuration file in the ansible root folder.
+eg ansible.cfg. and you can point ansible to where to locate the host file.
+eg [defaults]
+   inventory = ......   etc wecan also add stuffs like
+   remote_user = ec2-user
+   private_key_file = specify the path
+   host_key_checking = false (to disable fingerprinting
+there are other stuffs that can be added. please explore
+
+
+ansible --list-hosts all (to list all the host in the inventory. you can also point to the inventory using the -i option -i path-to-host-file
+OR
+ansible --list-hosts a-host-group in the host file
+
+Inventories can be specified using ips or hostname. if you are using hostnames, you must have specified the host name in your host file
+[servers]
+192.168.2.2
+OR
+[servers]
+serv1 ansible_host=192.168.2.2    {serv1 is the alias}
+
+playing around the list all, you can use * eg ansible --list-hosts "*" or app*
+
+you can also do servers:loadbalancer in front of the list all
+
+ANSIBLE TASKS example
+ansible -m ping all  (ansible-ansible command, -m=module flag, ping=module name and all is the inventory)
+there are different modules. eg shell, command etc, all these allows you to perform different task.
+\! means NOT and can help you excempt
+
+services Choices: reloaded; restarted; started; stopped.
+
+Playbook example: the name tag is not important its for understanding
+
+#ping.yml
+---
+   - host: all
+     tasks:
+     - name: "Pinging all hosts"
+       action: ping
+executing this will look like ansible-playbook ping.yml
+
+- host: serv
+  tasks:
+  - name: "this is the name"
+    copy: src=/ere/re dest=/wrtrwjk/
+
+Service Handlers: create service handlers to start, stop or restart system when changes are made
+-command, - service and handlers
+
+example playbook of using handlers
+- hosts: loadbalancers
+  become: true   **(this is to escakate privilege and become root)
+  tasks:
+  - name: change port number
+    lineinfile: ......
+    notify: Restart .....
+  handlers:
+  - name: Restart service....
+    service: name=httpd state=restarted (this can be rewritten as the below)
+	****service:
+		name: httpd
+		state: restarted  (which is equally the same as above.)
+* still means wildcard (everything)
+(check the ansible documentation for yum module and other parameters)
+
+--another example
+ ---
+    - hosts: webserv
+      tasks:
+	-name: Installing on the server
+	 yum:
+	   name:
+	      - httpd
+	      - php
+	   state: present
+
+task 
+name a file install services
+to install php,httpd run as root and installing httpd only for the other
+ensure apache starts
+
+Service handlers helps detects changes and restart the service when their is a change. If there is no changes to the service, the service handler will simply no run. and you can define what needs to run if a change is detected
+using the notify parameter to call the service handler
+eg
+notify: restart service
+
+handlers:
+   - name: restart service
+     service: name=httpd state=restarted
+****the notify parameter cakking must equal to the namme of the handler
+
+*Import feature allows you to run multiple playbook from a single file
+ - import_playbook: playbook-name
+
+****look this adhoc command up
+ansible -m service -a "name=httpd state=stopped" --become loadbalancers  (you can rewrite as)
+
+  - hosts: loadbalancers
+    become: true
+    tasks:
+	name: stop httpd service
+	service:
+	     name: httpd
+	     state: stopped
+
+
+command module eg
+command: service httpd status
+command module just simply gives you the opportunity to run linux commands
+
+
+Making use of variables works in ansible too, we can specify the variable and call it when needed. eg
+
+vars:
+   path_to_app: "/var/www/html"
+   another_variable: "something else"
+
+tasks:
+   - name: Add webserver info
+     copy:
+	dest: "{{ path_to_app }}/info.php"
+	content: "<h1> Hello world </h1>"
+the above i sjust an example
+-you can also create variables from info returned from tasks ran using register
+-then call the registered variables for later use
+-using the debug module anytime to see variables and debug playbooks. eg
+
+	vars:
+	  path_to_app: "/var/www/html"    (this is for creating local variables)
+	
+	tasks:
+	  - name: See directory contents
+	    command: ls -la {{ path_to_app }}    (this is for calling the variable)
+	    register: dir_contents   (this just stores the content of the command )
+
+	  - name: debug directory contents
+	    debug:
+	      msg: "{{ dir_contents }}"
+****check the output of ansible -m setup app1 (app1 is the name of the server this should take effect on, you can run it without it directly on host)
+
+******************Do a task that checks if the linux distro is ubuntu or centos and proceeds based on the output*******************
+
+try ansible roles to help you break your codes into divisions
+try this out by running, ansible-galaxy roles/webservers init  (webservers there is the name of the roles that will be created, its customizable bruh)
+*** when copying all the modules to the newly created roles, you dont need to copy the headers. eg when copying tasks, no need for the task header because ansible will take care of that.
+
+**** (--check) helps you with dry runs which allows you to run a playbook without making any changes. this will help you detect what changes will be made in the actual sense.
+
+**TAG (A way of tagging tasks in a playbook ans specifying to ansible what tasks to run when the playbook is triggered.example
+
+tasks:
+   - name: sample task1 do nothing
+     tags: upload
+   - name: sample task2 do nothing
+     tags: create
+then you can run this playbook like, ansible-playbook example.yml --tags upload (which triggers the playbook but only task with the upload tag is run,)
+--skip-tags can also use to skip specified tag
+
+ANSIBLE VAULT
+Create encrypted data file with
+ansible-vault create secret-variables.yml you can also pass the edit and view param
+you can tell ansible to prompt for password with
+ansible-playbook stest.yml --ask-vault-pass
+
+
+-
+    name: 'Install required packages'
+    hosts: localhost
+    vars:
+        packages:
+            - httpd
+            - binutils
+            - glibc
+            - ksh
+            - libaio
+            - libXext
+            - gcc
+            - make
+            - sysstat
+            - unixODBC
+            - mongodb
+            - nodejs
+            - grunt
+    tasks:
+        -
+            yum: 
+                name: '{{ item }}'
+                state: present
+            with_items: "{{ packages }}"
+
+
+
+**********ANSIBLE ROLES EXAMPLE
+-
+   name: "Install and configure MySql"
+   hosts: db-server
+   tasks:
+     - name: Install Pre-Requisites
+       yum: 
+    	   name: pre-req-packages
+	   state: present
+     - name: Install MySql Packages
+       yum: name=mysql state=present
+     - name: Start MySql Service
+       service: 
+	  name: mysql
+	  state: started
+     - name: Configure Database
+       mysql_db: name=db1 state=present
+
+***The above can be packaged as a whole with the below
+-
+  name: Install and Configure MySql
+  hosts: db-server1......db-server100
+  roles:
+       - mysql
+
+
+
+****To build your role from scratch use, 
+-ansible-galaxy init mysql
+then organize your file in folder structure like
+*my-playbook  (folder)
+ - playbook.yml
+ - roles  (folder)
+   -mysql  (folder)
+      -templates   (folder)
+      -tasks   (folder)
+      -handlers   (folder)
+      -vars   (folder)
+      -defaults  (folder)
+      -meta (folder)
+
+****In the playbool.yml file, you can have the below written;
+-
+  name: test
+  host: host-here
+  role:
+	- mysql
+ 
+
+***PLAYBOOK RUN OPTION
+**** (--check) helps you with dry runs which allows you to run a playbook without making any changes. this will help you detect what changes will be made in the actual sense. E.G ansible-playbook play.yml --check
+**to start a playbook at a desired task, use the --start-at-task option. e.g
+**ansible-playbook play.yml --start-at-task "task-name"
+
+**TAGs which helps you to tag yout task and use them when the playbook is running
+eg. ansible-playbook play.yml -tags "install" which can tell the playbook to only run the task with the "install" tag
+ansible-playbook play.yml --skip-tags "tag-name" to skip a tag this will skip the defined tag task
+
+*****yaml does not supports tabs, should be replaced with spaces
+
+
+
+
+
