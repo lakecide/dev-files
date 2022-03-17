@@ -1,0 +1,13 @@
+****KUBERNETES
+(How does Kubernetes create a Pod)
+
+We have the control node and the compute node. (The control node is the master plane where Kubernetes controller is located while the compute node is where containers are typically created.)
+We have the Kube-api server which is the point of contact when a node is to be created via kubectl.
+the api server stores values in the etcd (key value store which is also a source of truth for the kubernetes master)
+**the scheduler always reaches out to the kube-api server typically every 5 sec to ensure there are no pods to be created because the scheduler is responsile for pods allocation to nodes.
+
+**the compute node consist of the kubelet which is like the captain of the nodes , ** kubeproxy- which is responsible for node communications. **Container runtime engine: which is what is used to create a pod, eg docker.
+
+**Once there is a pod to be created, the *scheduler tell the api server which node is to be used to create the pod and the kube-api server reaches out to the kubelet to create the pod
+
+ 

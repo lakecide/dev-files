@@ -1,0 +1,31 @@
+
+1. confirm system affected and confirm if they have all been isolated.
+2. Check for endpoint solution on the system
+3. Confirm the type of server it is (VM or standalone), 
+4. If standalone, we can isolate and connect to a router
+
+standalone and in a DMZ, windows 2012, ERP running on the server
+endpoint is ESET 
+affected system is
+backup
+
+recommendations
+**second opinion test afterwards with hitmanpro or malwarebytes
+*sophos AV
+*All Administrative passwords changed
+*review all security/firewall policies
+*patch management for updates
+
+(Ask for back-up and the endpoint solution they use)
+
+*****Identify entry point and review all security/firewall policies
+**check event viewer for file modification activities (security)
+**Check processes and connections
+**All Administrative passwords changed
+**Identifying the type of infection by checking the strains and artifacts left behind(encryption note and encrypted file extention)
+**privilege credential scans on the network
+**patch management for updates
+**vulnerability scans on critical assets
+
+
+**Explore the file decryption option.

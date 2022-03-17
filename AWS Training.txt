@@ -1,0 +1,527 @@
+*******************AWS********************
+
+**IAM and EC2
+Aws Regions are Datacenters e.g Us-east-1 etc which is a location
+A region is a cluster of data centers
+**AWS Availability zones. each regions can have their availablility zones, 1 or more.
+**Each AZ is one or more data centers with redundant power, networking and connectivity. Azs are seperate from each other
+all AZs are connected.
+***IAM is a global service so it is not attached to a single region.
+
+Identity access management
+Users, Groups and roles comprises of the AWS security which makes IAM the center of AWS
+**Permissions are governed by policies written in JSON
+
+IAM federarion allows enterprises to integrate their own repository of users so they can login to AWS with their official creds.
+
+****EC2***
+EC2 mainly consists of virtual machines and can store data on virtual drives EBS(ELASTIC block storage) and distribute load across machines (ELB) load balancer. scaling the service using auto-scaling group (ASG)
+
+AMI (Amazon machine image) which EC2 will be launched on.
+
+****EC2,-  When trying to login via ssh on linux to the ec2 instance, you get permission error that the pem key is too open. use **** chmod 0400 the-pem-key **** to access, then run the ssh -i pem-key ec2-user@public-ip to access again.
+**but on windows, use putty gen to convert the key from pem to ppk then downloa d the key and goto putty then on the left pane, got the ssh auth and import the key then go to the front and enter ec2-user@pub-ip to login then save
+
+
+**Security Group**
+-Security groups are the fundamentals of network security in AWS
+-They control how traffic is allowed into or out of our EC2 Machines
+-Can be attached to multiple instances.
+-Locked down to a region/VPC combination
+-If your application is not accessible (time out), then its a security group issue
+-If the application gives connection refused, the application is probably not launched.
+ 
+**ELASTIC IP
+-With an elastic ip address, you can mask the failure of an instance or software by rapidly remapping the address to another instance in your account.
+-You can only have 5 elastic in your account (AWS can increase it)
+
+***EC2 INSTANCE LAUNCH TYPES***
+-On demand instances: short workload, predictable pricing like hourly.paygo
+-Reserved:(minimum 1 year)
+ -Reserved instances: long workloads up to 70% discount
+ -Convertible reserved instances: long workloads with flexible instances
+ -Scheduled Reserved Instances: e.g every thursday between 3 and 6pm
+-Spot Instances: short workloads for cheap, can loose instances (less reliable) up to 90% discount.
+-Dedicated instances: no other customers will share yoour hardware. 
+-Dedicated Hosts: book an entire physical server, control instance placement. allocation is 3 year period. this can also serve as compliance need so no one shares your instance or data
+***To terminate a spot instances, you need to first terminate the spot request before now manually terminating the spot instances.
+**Spot Fleets = set of Spot Instances + (optional) On Demand Instances 
+
+CI/CD means continuous integration/continuous delivery or deployment.
+
+***EC2 Instance Types -Main Ones
+R: applications that needs a lot of Memory - In memory caches
+C: applications that need good CPU - compute / database
+M: applications that are balanced (think "medium") - general / web app
+I: applications that need good local I/O (instance storage) - database
+G: applications that need a GPU - video rendering / machine learning
+T2/T3: burstable instances (up to a capacity)
+T2/T3 - unlimited burst
+***Real world tip on this: www.ec2instances.info
+
+***BURSTABLE INSTANCES (T2/T3)
+-Burstable instances can be amazing to handle unexpected traffic and getting the insurance that it will be handled correctly.
+-If your instance consistently runs low on credit, you need to moce to a different kind of non-burstable instance
+**T2 UNLIMITED can let you burst unlimitedly but you will still need to pay for it.
+
+****AMI (Amazon Machine Image)
+-Reason to use Custom AMI
+-Preinstalled packages needed
+-Faster boot time
+-machine comes configured with monitoring/enterprise software
+***NB AMI are built for a specific region.
+you can build and borrow custom AMI
+AMI lives in amazon S3.
+AMI is locked to a region after it has been made from image of an EC2 instance but it can also be moved to another region.
+-You can also modify the AMI permission to allow other users or instamce to see it
+**Sharing an AMI does not affect the ownership of the AMI
+**If you copy an AMI that has been shared with your account, you are the owner of the target AMI in your account.
+**To copy an AMI that was shared with you from another account, the owner of the source AMI must grant you read permissions for the storage that backs the AMI, either the associated EBS snapshot or an associated S3 bucket. EBS or S3.
+****If i copy an AMI from someone and now makes an EC2 from the AMI, I can effectively create an AMI from that and own It.
+**You cant copy an encrypted AMI that was shared with you from another account. Instead if the underlying snapshot and encryption key were shared with you, you can copy the snapshot while re encrypting it with a key of your own and own it.
+**You cant copy an AMI with an associated billing product that was shared with you from another account. This includes windows AMIS and AMIS from the AWS market place. to copy a shared AMI with billingproduct code, launch an EC2 instance in your account using the shared AMI and then create an AMI from the instance.
+
+*/var/www/html/index.html
+
+***PLACEMENT GROUPS
+*Cluster--clusters instances into a low latency group in a single AZ
+*Spread- spreads instances across underlying hardware (max 7 instances per group per AZ)
+*Partition- spread instances across many different partitions (scales to 100 of EC2 instances per group)
+***CLUSTER: Great network because EC2'S aare all in a cluster. can be used for big data job or apps that needs low latency and high network throughput. disadvantage is that if the rack fails all intances ogne. single point of failure.
+***SPREAD: All groups are spread across different regions to avoid failures.
+***PARTITION: Different partitions can be created in a single AZ (up to 7) so this also limits the failures.
+
+ELASTIC NETWORK INTERFACES (ENI)
+-Logical component in a VPC that represents a virtual network card.
+-The ENI is just like the onprem network card which can have ipv4/v6 ip, mac, publiv ip, etc, one or more security groups.
+-Youc an create ENI independently and attach them on the fly on EC2 or move them for fail over.
+-They are bound to AZ so they are only available in that AZ
+
+**EC2 HIBERNATE
+-Supported instance families- C3,C4 etc
+-Instance RAM size - must be less than 150GB
+-Instance size- not supported for bare metal instances.
+-AMI: Amazon linux2, linux AMI, ubuntu
+-Available for on demand and reserved instances
+-An instance cannot be hibernated for more than 60days
+
+***ELB (EC2 Load Balancer)
+-Classic Loadbalancer: supports HTTP and HTTPS.
+Application Loadbalancer: at later 7 supports websocket, http(S)
+Network Loadbalancer at Layer 4 and forwards UDP and TCP traffic to your instance and also handles millions of request per seconds
+If you want to have to entry dedicated to your application, you can use NLB which can have two interface.IF you want extreme performance TCP and UDP, NLB is the way to go and its not included in the free tier.
+Network LB has one static IP per AZ and supports assigning Elastic IP 
+
+**LOADBALANCER STICKINESS
+Stickimess cam be implemented on the loadbalancer so that it forwards traffic to the same instance behind the loadbalancer, this can be implemented so that a user does not loose session. this only works for CLB and ALB. A cookie is used for this stickiness which has expiration data that admin can control via timing.
+-Cross Zone LB distributes evenly across diffrent AZ. for ALB, Its enabled by default and not charged, disabled for NLB and its charged while for CLB disabled and not charged if enabled
+
+***SNI (Server Name Indicator): requires clients to indicate the hostname of the target server in the initial SSL handshake. The server will then find the correct certificate ot return to the default.
+Only works for ALB and NLB
+***ACM (Amazon certificate manager) helps you manage certificates.
+
+**ELB-Connection draining
+feature name
+CLB: Connection draining
+ALB/NLB: Deregistration delay
+-And this is called time to complete in flight requests while the instance is de-registring or unhealthy.
+-ELB stops sending requests to the instance which is de-registering.
+
+
+EBS Volume is a network drive and it is not a physical volume, it is also locked to an AZ. It can be detached from an EC2 Volume and attahced to another.
+***TYPES
+-GP2(SSD)-General purpose SSDvolume that balance price and performance 
+-IO1(SSD)-Highest performance SSD for mission critical low latency or high throughput workloads
+-ST1(HDD)-Low cost HDD designed fro frequency accessed
+-STI(HDD)Lowest cost HDD for less frequently accessed workloads.
+
+EFS (Is network file system type of storage system which is shared storage service compared to EBS)
+
+AWS ElastiCache Overview
+-The same way RDS is to get managed relational databases, elasticache is to get redis or memcached.
+-caches are in memory databases with really high performance, low latency
+-helps reduce load off of databases for read intensive workloads
+-helps make your application stateless | write scaling using sharding and read scaling using read replicas.
+-multi AZ with failover capability
+
+How DB cache works
+-Applications queries elasticache, if not available, they get data from RDS and store in elasticache. this helps reduce load in RDS.
+-cACHE must have an invalidation strategy to make sure only the most current data is used there.
+***REDIS-
+-multi AZ with auto failover
+-read replicas to scale reads and have high availability
+-data durability using AOF persistence
+-backup and restore features
+***MEMCACHED
+-multi node for partitioning of data
+-non persistence
+-no back up and restore
+-multi threaded architecture
+
+
+*ELASTICACHE - CACHE SECURITY
+-ALL caches supports SSL in flight encryption| DO NOT SUPPORT IAM authentication | IAM policies on elasticache are only used for AWS API level security
+-REDIS AUTH: Allows you to set password/token when you create a redis cluster which is an extra level of security for your cache( ontop of security groups)
+-Memcached: supports SASL based authentication
+
+*****AWS RDS OVERVIEW
+-RDS- Relational database service
+-Its a managed DB SERVICE for DB which uses SQL as a query language
+-It allows you to create database in the cloud that are managed by AWS
+examples supported are, postgre, mysql, oracle, msql, mariadb and aurora
+
+**RDS BACKUP
+-Transaction logs are backed up by RDS every 5minutes
+-7 days retention (can be increased to 35 days)
+-ability to restore to any point in time( fromoldest to 5min ago)
+**DB SNAPSHOTS
+-This are maunal triggers by the user
+-rentention for as long as you want
+
+*READ REPLICAS FOR READ SCALABILITY
+-Read replicas only take reads
+-up to 5 read replicas with AZ cross AZ or cross region
+-replication is ASYNC SO reads are eventually consistent
+-replicas can be promoted to their own db
+-applications must update the connection string to leverage read replicas
+
+****AWS ROUTE53 
+-Route 53 is a managed DNS
+-DNS is a collection of rules and records which helps clients to understand how to reach a server through its domain name
+-In AWS, the most common records are
+A: which is hostname to IPV4
+AAAA: hostname to IPV6
+CNAME: hostname to hostname
+Alias: hostname to AWS resource
+route53 can use a public domain you own or buy
+route53 is also a global service
+ 
+TTL(time to live)
+high ttl (eg 24hrs) means less traffic on DNS | possibly outdated records
+Low TTL (eg 60s) more traffic on DNS | records are outdated for less time | easy to change records
+TTL is mandatory for each DNS record. ttl works in a way that when a request is made to a dns server, it responds with a ttl which is stored in the cache of the browser so the broswer can check the cache while the ttl is still valid before it makes another request to the DNS.
+
+CNAME vs ALIAS
+**CNAME- Point a hostname to any other hostname, app.mydomain.com => top.me.com
+cname can only be for non root domain eg doom.domain.com
+**ALIAS- Point a hostname to an AWS resource (app.domain.com => game.me.com)
+works for root and non root domain | free of charge | native health check.
+
+A record can have multiple ip address mapped to a single record
+**Weighted record helps you route between multiple instances as they point to the same domain but from different ip(instance) which a weight measured in % is use to measure how the isntances serve answers/request.
+**A simple routing policy helps replies to your queries with the ip of the eomain requested. | use when you need to redirect to a single resource | you cant attach health checks to simple routing policy. | if multiple values are returned, a random one is chosen by the client.(that means you can have 2 or more ips in the A record set)
+**Latency Routing Policy: Redirect to the server that has the least latency close to us | helpful when latency of users is priority | latency is evaluated in terms of users to designated AWS region | germany may be redirect to the US if thats the lowest latency.
+
+**HEALTH CHECKS
+-unhealthy health checks default is (3 checks) | healthy health check default (3) | default health check interval is 30sec can be higher or lower. | about 15 health check will check the endpoints health | one request every 2 sec on the average | can have http, TCP, HTTPS health checks (no ssl verification) | possibility of integrating health checks with cloudwatch | health checks can be linked to route 53 DNS queries
+
+**FAILOVER
+You have to create health check to monitor the instances incase there is an issue, it can failover to the other instance. You will create the failover using A record and picking failover, setting the TTL and also associating a health check to the primary record is mandatory while the secondary failover does not need a health check
+**GEO LOCATION: can help you route traffic based on location and you can also set a default location incase a user is coming from an unmapped location. this can be created with the association of a health check
+
+Route53 is also a domain registrar and remember domain registrar is not a DNS
+ 
+
+******SOLUTIONS ARCHITECHTING*****
+**FOR A simple web app
+-Public vs private ip and EC2 Instances discussion
+-Elastic ip vs Route 53 vs loadbalancers
+-Route53 TTL , A record and Alias record
+-Maintening EC2 instances manually vs ASG
+-Multi AZ to survice disasters
+-ELB health checks
+-Security groups rules
+-Reservations of capacity for cost savings when possible
+-We are considering  pillars for a well architechted application: cost, performance, reliability, security, operational excellence.
+
+****For a 3 tier web application with CLIENT | SERVER | DATABASE
+-ELB Sticky for session stickyness to instances
+-Web clients for storing cookies and making web app stateless (session id can also be stored by elasticache for identification)
+-ElastiCache
+--for storing sessions (alternate: dynamodb)
+--for caching data from RDS
+--Muti AZ
+-RDS
+--For storing user data
+--read replicas for scaling reads
+--multi AZ for disaster recovery
+-Tight security with security groups referencing each other
+
+****Another stateful web app (mywordpress.com) to make it scalable
+
+
+AMAZON S3
+
+*Storage classes Comparison
+-S3 Standard | S3 Intelligent tiering | S3 Standard IA | S3 One zone IA | S3 Glacier | S3 Glacier Deep Archive
+
+SNS. SQS and LAMBDA function
+sns is simple nitofication service that can be used to receive and send log to email etc while the SQS can be used to retrive logs from a bucket and send to a logging system eg SIEM.
+
+**AWS ATHENA
+This is as erverless service to perform analytics directly against S3 files.
+Use case; business intelligence/analytics/reporting,analyze and query VPC flow logs, ELB logs, cloudtrail trails, etc
+use case also; analyze data directly on s3 , use athena
+it also uses sql to analyze query
+It is just like a SIEM which helps you analy your logs
+
+**CLOUDFRONT
+-Content delivery Network (CDN)
+-Improves read performance, content is cached at the edge
+
+Global accelerator help with access to application hosted on ec2 via different regions. it can be mapped to ALB's also
+
+
+***AWS STORAGE GATEWAY
+-Bridge between on-premises data and cloud data in S3
+-Use cases: disaster recovery, backup and restore, tiered storage.
+
+* 3 types of storage gateway
+-File gateway | Volume gateway | Tape gateway
+
+*File Gateway
+-Configured s3 buckets are accessible using the NFS and SMB protocol | Supports S3 standard, s3 IA, s3 one zone IA. | most recently used data is cached in the file gateway. | can be mounted on many servers.
+
+*Volume Gateway
+-Block storage uses ISCSI protocol which is backed by S3 | Backed by EBS snapshots which can help restore on-premises volumes. | Cached volumes: low letency access to most recent data. | Stored volume: entire dataset is on premises, scheduled backups to S3.
+
+*Tape Gateway
+-Majorly for backups as some companies have backup processes using physical tapes | with tape gateway, compamies will use the same processes by this will be in the cloud. | this is backed by amazon s3 and glacier | 
+
+On-premises data to the cloud = storage gateway
+****TIPS*****
+-FILE ACCESS /nfs => file gateway (backed by s3)
+-Volumes/blocke storage/iSCSI => Volume gateway (backed by s3 with EBS snapshots)
+-VTL Tape solution/backup with iSCSI => Tape gateway (backed by s3 and glacier)
+
+**AMAZON EFS is FOR LINUX only (network share)
+Amazon FSX is the windows alternative for network share
+while FSx for lubstre is for linux clusters
+
+***STOP COMPARISON
+- S3: Object storage
+- Glacier: Object archival
+- EFS: Network file system for linux instances
+- FSx for Windows: Network file system for windows servers
+- FSx for Lustre: High performance computing linux file system
+- EBS Volumes: Network storage for one EC2 instance at a time
+- Instance Storage: Physical storage for your EC2 instance (high IOPS)
+- Storage Gateway: File Gateway. Volume Gateway(cache & stored), Tape Gateway
+- Snowball / Snowmobile: to move large amount of data to the cloud, physically
+- Database: for specific workloads, usually with indexing and querying
+
+**SQS (Simple queue message) for sending and processing messages
+SQS works in pooling mode as messages can be sent to it but can be polled out of it at intervals.
+SQS is a fully managed service used to decouple applications.
+default retention of messages in a queue is 4days and max is 14days.
+**Can have duplicate messages(atleast once elivery, occasionally).
+
+***Dead letter Queue: This is when a meesage cannot be read by the consumer and this causes a loop. we can set a threashold for how many times a message can be  processed and returned to the queue before it is declayed dead.
+
+
+SQSFIFO naming the queue type has to end with .fifo
+SQS can be used to decouple application by having it send and receive messages in between ASG.
+
+**AMAZON SNS
+Helps when you need to send one message to many receivers which can include the SQS queue.
+SNS Integrates with a lot of AWS Services
+- many AWS services can send data directly to SNS for notifications
+- Cloudwatch (for alarm notifications)
+- Auto scalling groups 
+- Amazon S3 (bucket events notifications)
+- Cloud formation (oupon state change notification)
+- Up to 10000000 subscribers
+- Data is not persisted (lost if not delivered)
+- Up to 100000 topics
+- No need to provision throughput
+
+**SNS TOPIC Subscription protocols
+- HTTP/HTTPs | Email | Email JSON | Amazon SQS | LAMBDA
+
+**AMAZON KINESIS
+- This is great for application logs, metrics, IOT, clickstreams and also realtime big data
+- Data is automatically replicated to 3AZ
+Kinesis Streams: Has low latency streaming ingest at scale
+Kinesis Analytics: Perform real-time analytics on streams using SQL
+Kinesis Firehose: Load streams into S3, Redshift elasticsearch
+
+from AWS-cli ****aws s3 or aws service-name OR aws help
+*Kinesis Data streams
+-You will need to write custom code (producer/consumer)
+-Real time (~200ms)
+-Must manage scaling (shard splitting/merging)
+-Data storage for 1 to 7 days, replay capability, multi consumers
+
+*Kinesis Data Firehose
+-Fully managed service, no administration, automatic scaling,serverless
+-Load data into Redshift/Amazon S3 / Elasticsearch /Splunk
+-Supports many data formats, conversions, transformation, compressions
+*Kinesis data firehose can ingest dat from kinesis agent, kinesis data streams, cloudwatch logs & events, SDK Kinesis producer library.
+
+
+-Kinesis is meant for real time big data analytics and ETL
+- Consumers pull data
+- As many consumers as you want
+- Ordering at the shard level
+- Must provision throughput
+
+*******AMAZON KINESIS and SQS/SNS SQS FIFO Breakdown on youtube
+****how to use kinesis to receive data
+
+*****SERVERLESS IN AWS
+-AWS Lambda | DynamoDB | AWS Cognito | AWS API gateway | Amazon S3 | AWS SNS & SQS | AWS Kinesis data firehose | Aurora Serverless | Step functions | Fargate
+
+**WHY AWS Lambda
+-Virtual functions - no servers to manage
+-Limited by time - short executions
+-Run on demand
+-Scaling is automated
+
+**AWS LAMBDA Language support
+- Node.js | python | java | c# | golang | powershell | ruby | 
+**NB. Docker is not supported for AWS Lambda, Its for ECS / Fargate
+
+**Main Lambda integrations
+-API Gateway (to trigger rest api function using lambda)
+-Kinesis - To perform data analysis and transformation using lambda on the fly
+-DynamoDB - To make changes to the DB USING Lambda on the fly
+-S3 - Bucket storage using lambda
+-Cloudfront
+-Cloudwatch events - Using lambda to monitor activities in our infrastructure
+-Cloudwatch logs- using lambda to pipe the logs to a service
+-SNS - using lambda to subscribe to topics
+-SQS - using lambda to process messages from sq queue
+-Cognito- Using lambda to monitor user activities
+
+
+***DYNAMODB
+-Fully managed, highly available with replica across 3 AZ by default
+-NoSQL databae - ie not a relational database
+-Scales massive workloads, distributed database
+-Millions of requests per seconds, trillions of rows, 100s of TB of storage
+-Fast and consistent in performance
+-Integrated with IAM for security, authorization and administration
+-Enables event driven programming wirh dynamoDB streams
+-Low cost and auto scaling capability
+
+**DynamoDB BASICS
+-DynamoDB is made of tables, db already created
+-Each table has a primary key (must be decided at creation time)
+-Each table can have infinite number of item (=rows)
+-Each table has attributes
+-max size of a item is 400kb
+-Data types supported are scaler types= string | number | binary | boolean and null
+document type = list | map
+set types = string set | number set | binary set
+
+
+***DynamoDB - DAX
+DAX= DynamoDB Accelerator
+
+
+
+****AWS SERVERLESS WEBSITE 
+-Static content will be distributed via cloudfront with s3 at the back end while also addign security with that using OAI infront of the S3 to only allow connection from the cloudfront.
+-The rest API will be serverless and doesnt need cognito because its public
+-We will leverage a global DynamoDB table to server the data globally
+-Enabled DynamoDB streams to trigger a lambda fucntion
+-The lambda function had an IAM role which could use SES
+-SES(Simple email service) was used to send emails in a serverless way
+-S3 can trigger SQS /SNS / Lambda to notify events
+
+
+***WHY CLOUDFRONT
+-No changes to architecture
+-Will cache files accessed at the edge
+-EC2 instance behind the cloudfront arent serverless but cloudfront is serverless and will scale when needed
+-We can save on EC2 ASG scalling and also save availability network band cost
+-Easy way to make existing application more scalable and cheaper
+
+
+**S3 Use case ; static files, key value store for big files and website hosting
+
+
+***ELASTICSEARCH
+-With elasticsearch, you can search any fiels even partial match will return something
+-Its common to use elasticsearch as a complement to anothe database
+-Elasticsearch also has some usage for big data applications
+-You can provision a cluster of instance
+-Builtin integration with kinesis data firehose, AWS IOT and amazon cloudwatch, cloudwatchlogs for data ingestion.
+-security through Cognito, IAM, KMS encryption, SSL AND VPC
+-Comes with kibana for visualization
+-Its similar to RDS
+
+*****DATABASE TYPES
+-RDBMS; RDS, Aurora - great for joins
+-NOSQL Database; DynamoDB(Json), Elasticache (key /value pair),Neptune (for graphs) no joins, no SQL
+-Object Store; S3 (for big objects) / Glacier (for backup/archieves)
+-Data Warehouse (=SQL Analytics /BI); Redshift, Athena
+-Search; ElasticSearch (Json) - free text, unstructured searches
+-Graphs; Neptune -Displays relationships between data.
+
+
+****CLOUDWATCH vs CLOUDTRAIL vs AWS CONFIG
+*CloudWatch
+-Performance monitoring (metrics, CPU, network, etc) and dashboards
+-Events and alerting
+-Log aggregation and Analysis
+*CloudTrail
+-Record API calls made within your account by everyone
+-Global service
+-Can define trails fro specific resources
+*Config
+-Record configuration changes
+-Evaluate resources against compliance rules
+-Get timeline of changes and compliance
+
+
+
+
+******VPC****** VIRTUAL PRIVATE CLOUD
+-You can have  multiple VPCs in a region (max 5 per region)
+-Max CIDR per VPC is 5 for each CIDR:
+  Min size is /28 and max size is /16
+-Private IP ranges are allowed.
+-Your VPC CISR should not overlap with your other networks
+
+
+***SUBNETS - IPV4
+-AWS reserves 5 IP address (first 4 and the last 1 ip address ) in each subnet
+-These ips are not available for use and cannot be assigned to any instance
+-if block 10.0.0.0/24 is picked, reserved ips are
+ -10.0.0.0: Network address
+ -10.0.0.1: Reserved by AWS for the VPC router
+ -10.0.0.2: Reserved by AWS for mapping to Amazon provided DNS
+ -10.0.0.3: Reserved by AWS for future use
+ -10.0.0.255: Network broadcast address: AWS does not support broadcast in VPC, therefore the address is reserved
+
+***INTERNET GATEWAYS
+-Internet gateways help our VPC instances connect with the internet
+-It scales horiozntally and is HA redundant
+-Must be created seperately from VPC
+-One VPC can only be attahced to one IGW and vice versa
+-Internet gateway is also a NAT for the instances that have a public IPV4.
+-Internet gateways on their own do not allow internet access
+-route table must also be edited
+
+****NB; NAT Instance is Different from NAT Gateway, nat instance is like an instance
+
+***NACL Network Access control list
+Security groups firewall are stateful while NACL are stateless(all traffic gets checked no matter what)
+-NACL are like a firewall which controls traffic from and to a subnet
+-Default NACL allows everything outbound and everything inboind
+-One NACL per subnet, new subnets are assigned the default NACL
+-Newly created NACL will deny everything
+-NACL are a great way of blocking a specific IP at the subnet level
+
+***VPC PEERING (Linking 2 vpcs together (the vpc must not have overlapping subnets))
+-Create a peerign connection then update the routes from the subnets to go through the peering just created.
+
+***VPC ENDPOINTS
+-Endpoints allow you to connect to AWS services using a private network instead of the public www network.
+-They scale horizontally and are redundant
+-They remove the need for IGW,NAT etc to access AWS services
+-Interface: provisions an ENI (private IP address) as an entry point (must attach security group)
+-Gateway: provisions a target and must be used in a route table
+
+
